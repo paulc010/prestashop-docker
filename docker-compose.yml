@@ -1,0 +1,123 @@
+networks:
+  prestashop:
+    driver: bridge
+
+services:
+  pslatest:
+    image: prestashop/prestashop:8.1.4-8.1
+    name: pslatest
+    networks:
+      prestashop:
+    ports:
+      - 8383:80
+    links:
+      - mariadb:mariadb
+    depends_on:
+      - mariadb
+    volumes:
+      #- ./src:/var/www/html
+      #- ./src/modules:/var/www/html/modules
+      #- ./src/themes:/var/www/html/themes
+      #- ./src/override:/var/www/html/override
+      - ./init-scripts:/tmp/init-scripts
+    environment:
+      #- PS_DEV_MODE=0
+      #- PS_HOST_MODE=0
+      #- PS_DEMO_MODE=0
+      #- DB_SERVER=mariadb
+      #- DB_USER_FILE=/run/secrets/db_user
+      #- DB_PASSWD_FILE=/run/secrets/db_user_pw
+      #- DB_NAME_FILE=/run/secrets/db_name
+      #- PS_INSTALL_AUTO=0
+      #- PS_ERASE_DB=0
+      #- PS_INSTALL_DB=0
+      #- PS_DOMAIN_FILE=/run/secrets/domain
+      #- PS_LANGUAGE=en
+      #- PS_COUNTRY=gb
+      #- PS_ALL_LANGUAGES=0
+      #- PS_FOLDER_ADMIN=admin-dev
+      #- PS_FOLDER_INSTALL=install-dev
+      #- PS_ENABLE_SSL=0
+      #- ADMIN_MAIL_FILE=/run/secrets/admin_mail
+      #- ADMIN_PASSWD_FILE=/run/secrets/admin_pw
+      - PS_HANDLE_DYNAMIC_DOMAIN=0
+      - E_DEVELOPMENT=1
+      - E_SMTP_SERVER=1
+    secrets:
+      - db_user
+      - db_user_pw
+      - db_name
+      - domain
+      - admin_mail
+      - admin_pw
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb
+    name: pslatest-mariadb
+    networks:
+      prestashop:
+    volumes:
+      #- ./db:/var/lib/mysql
+      - ./database-import:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_pw
+      - MYSQL_DATABASE_FILE=/run/secrets/db_name
+    secrets:
+      - db_root_pw
+      - db_name
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    name: pslatest-phpmyadmin
+    networks:
+      prestashop:
+    links:
+      - mariadb:mariadb
+    ports:
+      - 1239:80
+    depends_on:
+      - mariadb
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_USER_FILE=/run/secrets/db_user
+      - PMA_PASSWORD_FILE=/run/secrets/db_user_pw
+    secrets:
+      - db_user
+      - db_user_pw
+    restart: unless-stopped
+
+  maildev:
+    image: maildev/maildev
+    name: maildev
+    networks:
+      prestashop:
+    ports:
+      - "8088:1080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+    environment:
+      - TZ=${TZ:-Europe/London}
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    restart: unless-stopped
+
+secrets:
+  db_root_pw:
+    file: ./secrets/db-root-pw.txt
+  db_user:
+    file: ./secrets/db-user.txt
+  db_user_pw:
+    file: ./secrets/db-user-pw.txt
+  db_name:
+    file: ./secrets/db_name.txt
+  domain:
+    file: ./secrets/domain-development.txt
+  admin_mail:
+    file: ./secrets/admin_email_development.txt
+  admin_pw:
+    file: ./secrets/admin_pw_development.txt
+  
