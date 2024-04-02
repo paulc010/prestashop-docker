@@ -34,6 +34,6 @@ if (!defined('_PS_VERSION_'))
 // Configure shop to use maildev
 Configuration::updateValue('PS_MAIL_SMTP_ENCRYPTION','off');
 Configuration::updateValue('PS_MAIL_SMTP_PORT','1025');
-Configuration::updateValue('PS_MAIL_SERVER', 'msildev');
+Configuration::updateValue('PS_MAIL_SERVER', 'maildev');
 
 die();
