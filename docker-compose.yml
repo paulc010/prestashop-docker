@@ -4,7 +4,7 @@ networks:
 
 services:
   
-  ps-staging:
+  ps-dev:
   
     image: prestashop/prestashop:8.1.4-8.1
   
@@ -40,7 +40,7 @@ services:
 
       # The following is used to provide customisation
       - ./init-scripts:/tmp/init-scripts
-    
+      - ./tmp:/tmp
     environment:
       # Enable prestashop debug mode via environment variable
       # Note that since PrestaShop docker using a custom defines
@@ -61,10 +61,10 @@ services:
       - DB_NAME_FILE=/run/secrets/db_name
 
       # The following three parameters control automatic installation
-      #- PS_INSTALL_AUTO=0
+      - PS_INSTALL_AUTO=1 # default : 0
       
       #- PS_ERASE_DB=0
-      #- PS_INSTALL_DB=0
+      - PS_INSTALL_DB=1 # default : 0
 
       # Set the domain for the local copy. The database will be updated
       # and there is no need to manually change the configuration even
@@ -72,7 +72,7 @@ services:
       # PS_HANDLE_DYNAMIC_DOMAIN is set = 1
       - PS_DOMAIN_FILE=/run/secrets/domain
       # Automatically update the domain in the database
-      - PS_HANDLE_DYNAMIC_DOMAIN=0
+      - PS_HANDLE_DYNAMIC_DOMAIN=1
 
       # Localisation
       #- PS_LANGUAGE=en
@@ -85,7 +85,7 @@ services:
 
       # If SSL is used, then you will need to configure it on your host
       # or your proxy (e.g. nginxproxymanager) if applicable.
-      #- PS_ENABLE_SSL=0
+      - PS_ENABLE_SSL= # default: 0
 
       # Only really useful if you are just spinning up am empty default install
       # To use existing credentials in an uploaded DB, then manually adjust
@@ -98,7 +98,7 @@ services:
       - E_DEVELOPMENT=1
 
       # Configure the store to use maildev for email testing (see init-scripts)
-      - E_SMTP_SERVER=1
+      - E_SMTP_SERVER=0
 
     secrets:
       - db_user
