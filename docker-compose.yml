@@ -8,8 +8,6 @@ services:
   
     image: prestashop/prestashop:8.1.4-8.1
   
-    name: ps-staging
-  
     networks:
       prestashop:
   
@@ -116,8 +114,6 @@ services:
     
     image: mariadb
     
-    name: ps-staging-mariadb
-    
     networks:
       prestashop:
     
@@ -140,8 +136,6 @@ services:
   phpmyadmin:
     
     image: phpmyadmin/phpmyadmin
-    
-    name: ps-staging-phpmyadmin
     
     networks:
       prestashop:
@@ -169,8 +163,6 @@ services:
   maildev:
     
     image: maildev/maildev
-    
-    name: maildev
     
     networks:
       prestashop:

@@ -31,7 +31,7 @@ It is recommended that you proxy your containers with Nginx Proxy Manager which 
 
 ## User and Employee Authentication
 
-In order to properly authenticate users yo uwill need to copy over the specific crypto keys required in /app/config/parameters.php. The /app/config directory is persisted in a volume for this purpose.
+In order to properly authenticate users you will need to copy over the specific crypto keys required in /app/config/parameters.php. The /app/config directory is persisted in a volume for this purpose.
 
 ## Running
 Once configuration is complete you will be able to spin up your site using:
