@@ -26,7 +26,7 @@
 // Workaround for redirection on init
 $_POST['id_shop'] = 1;
 
-require_once 'config/config.inc.php';
+require_once '/var/www/html/config/config.inc.php';
 
 if (!defined('_PS_VERSION_'))
 	exit;

@@ -3,46 +3,105 @@ networks:
     driver: bridge
 
 services:
-  pslatest:
+  
+  ps-staging:
+  
     image: prestashop/prestashop:8.1.4-8.1
-    name: pslatest
+  
+    name: ps-staging
+  
     networks:
       prestashop:
+  
     ports:
-      - 8383:80
+      # If you are not using a proxy, then you may want to just
+      # run a single instance on port 80 rather than running
+      # multiple stores on different ports. Adjust accordingly.
+      - 1230:80
+  
     links:
       - mariadb:mariadb
+  
     depends_on:
       - mariadb
+  
     volumes:
-      #- ./src:/var/www/html
-      #- ./src/modules:/var/www/html/modules
-      #- ./src/themes:/var/www/html/themes
-      #- ./src/override:/var/www/html/override
+      # These can be adjusted to suit various situations
+      # By default there is local filesystem persistence
+      # only for the main configuration directory to allow
+      # changes to be made to provide authentication when
+      # an existing store DB is imported.
+
+      #- ./html:/var/www/html
+      #- ./modules:/var/www/html/modules
+      #- ./themes:/var/www/html/themes
+      #- ./override:/var/www/html/override
+      # Required to match authentication with an existing store DB
+      # parameters.php will need to be edited to match the source store.
+      - ./config:/var/www/html/app/config
+
+      # The following is used to provide customisation
       - ./init-scripts:/tmp/init-scripts
+    
     environment:
+      # Enable prestashop debug mode via environment variable
+      # Note that since PrestaShop docker using a custom defines
+      # file, the environment is the only way to toggle this mode.
       #- PS_DEV_MODE=0
+      
+      # Only ever used for PrestaShop infrastructure
       #- PS_HOST_MODE=0
+      
+      # Should you want to create a demo store
       #- PS_DEMO_MODE=0
-      #- DB_SERVER=mariadb
-      #- DB_USER_FILE=/run/secrets/db_user
-      #- DB_PASSWD_FILE=/run/secrets/db_user_pw
-      #- DB_NAME_FILE=/run/secrets/db_name
+
+      # The following are mandatory, although the use of secrets is optional
+      # When not using secrets remove _FILE from the variable name.
+      - DB_SERVER=mariadb
+      - DB_USER_FILE=/run/secrets/db_user
+      - DB_PASSWD_FILE=/run/secrets/db_user_pw
+      - DB_NAME_FILE=/run/secrets/db_name
+
+      # The following three parameters control automatic installation
       #- PS_INSTALL_AUTO=0
+      
       #- PS_ERASE_DB=0
       #- PS_INSTALL_DB=0
-      #- PS_DOMAIN_FILE=/run/secrets/domain
+
+      # Set the domain for the local copy. The database will be updated
+      # and there is no need to manually change the configuration even
+      # when uploading a database from another store, providing
+      # PS_HANDLE_DYNAMIC_DOMAIN is set = 1
+      - PS_DOMAIN_FILE=/run/secrets/domain
+      # Automatically update the domain in the database
+      - PS_HANDLE_DYNAMIC_DOMAIN=0
+
+      # Localisation
       #- PS_LANGUAGE=en
       #- PS_COUNTRY=gb
       #- PS_ALL_LANGUAGES=0
-      #- PS_FOLDER_ADMIN=admin-dev
-      #- PS_FOLDER_INSTALL=install-dev
+      
+      # These prevent the need to manually rename each time the container is spun up
+      - PS_FOLDER_ADMIN=admin-dev
+      - PS_FOLDER_INSTALL=install-dev
+
+      # If SSL is used, then you will need to configure it on your host
+      # or your proxy (e.g. nginxproxymanager) if applicable.
       #- PS_ENABLE_SSL=0
+
+      # Only really useful if you are just spinning up am empty default install
+      # To use existing credentials in an uploaded DB, then manually adjust
+      # app/config/parameters.php. This is mapped by default to the config
+      # subdirectory below the directory containing this YAML file.
       #- ADMIN_MAIL_FILE=/run/secrets/admin_mail
       #- ADMIN_PASSWD_FILE=/run/secrets/admin_pw
-      - PS_HANDLE_DYNAMIC_DOMAIN=0
+
+      # Point all PHP errors to the syslog (see init-scripts)
       - E_DEVELOPMENT=1
+
+      # Configure the store to use maildev for email testing (see init-scripts)
       - E_SMTP_SERVER=1
+
     secrets:
       - db_user
       - db_user_pw
@@ -50,62 +109,90 @@ services:
       - domain
       - admin_mail
       - admin_pw
+    
     restart: unless-stopped
 
   mariadb:
+    
     image: mariadb
-    name: pslatest-mariadb
+    
+    name: ps-staging-mariadb
+    
     networks:
       prestashop:
+    
     volumes:
       #- ./db:/var/lib/mysql
+
+      # Any SQL file in here will be used to populate the database on creation
       - ./database-import:/docker-entrypoint-initdb.d
+
     environment:
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_pw
       - MYSQL_DATABASE_FILE=/run/secrets/db_name
+    
     secrets:
       - db_root_pw
       - db_name
+    
     restart: unless-stopped
 
   phpmyadmin:
+    
     image: phpmyadmin/phpmyadmin
-    name: pslatest-phpmyadmin
+    
+    name: ps-staging-phpmyadmin
+    
     networks:
       prestashop:
+    
     links:
       - mariadb:mariadb
+    
     ports:
-      - 1239:80
+      - 1231:80
+    
     depends_on:
       - mariadb
+    
     environment:
       - PMA_HOST=mariadb
       - PMA_USER_FILE=/run/secrets/db_user
       - PMA_PASSWORD_FILE=/run/secrets/db_user_pw
+    
     secrets:
       - db_user
       - db_user_pw
+
     restart: unless-stopped
 
   maildev:
+    
     image: maildev/maildev
+    
     name: maildev
+    
     networks:
       prestashop:
+    
     ports:
-      - "8088:1080"
+      - 1232:1080
+    
     logging:
       driver: "json-file"
       options:
         max-size: "1m"
+    
     environment:
       - TZ=${TZ:-Europe/London}
       - MAILDEV_WEB_PORT=1080
       - MAILDEV_SMTP_PORT=1025
+    
     restart: unless-stopped
 
 secrets:
+  # create and/or modify these files in the secrets subdirectory
+  # to configure your environment.
   db_root_pw:
     file: ./secrets/db-root-pw.txt
   db_user:
