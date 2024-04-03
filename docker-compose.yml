@@ -53,24 +53,26 @@ services:
       # Should you want to create a demo store
       #- PS_DEMO_MODE=0
 
-      # The following are mandatory, although the use of secrets is optional
-      # When not using secrets remove _FILE from the variable name.
+      # The following are mandatory.
       - DB_SERVER=mariadb
-      - DB_USER_FILE=/run/secrets/db_user
-      - DB_PASSWD_FILE=/run/secrets/db_user_pw
-      - DB_NAME_FILE=/run/secrets/db_name
+      - DB_USER=devuser
+      - DB_PASSWD="9878943bfbdndmfgb67345340mndf(*^&bhk56)"
+      - DB_NAME=dev-test
 
       # The following three parameters control automatic installation
       - PS_INSTALL_AUTO=1 # default : 0
       
       #- PS_ERASE_DB=0
-      - PS_INSTALL_DB=1 # default : 0
+      # If you enable PS_INSTALL_DB then it will likely fail
+      # Better to create the database in the mariadb services section,
+      # if required
+      #- PS_INSTALL_DB=0 # default : 0
 
       # Set the domain for the local copy. The database will be updated
       # and there is no need to manually change the configuration even
       # when uploading a database from another store, providing
       # PS_HANDLE_DYNAMIC_DOMAIN is set = 1
-      - PS_DOMAIN_FILE=/run/secrets/domain
+      - PS_DOMAIN=localhost
       # Automatically update the domain in the database
       - PS_HANDLE_DYNAMIC_DOMAIN=1 # default: 0
 
@@ -91,22 +93,14 @@ services:
       # To use existing credentials in an uploaded DB, then manually adjust
       # app/config/parameters.php. This is mapped by default to the config
       # subdirectory below the directory containing this YAML file.
-      #- ADMIN_MAIL_FILE=/run/secrets/admin_mail
-      #- ADMIN_PASSWD_FILE=/run/secrets/admin_pw
+      #- ADMIN_MAIL=
+      #- ADMIN_PASSWD=
 
       # Point all PHP errors to the syslog (see init-scripts)
       - E_DEVELOPMENT=1
 
       # Configure the store to use maildev for email testing (see init-scripts)
       - E_SMTP_SERVER=0
-
-    secrets:
-      - db_name
-      - db_user
-      - db_user_pw
-      - domain
-      - admin_mail
-      - admin_pw
     
     restart: unless-stopped
 
@@ -125,15 +119,10 @@ services:
 
     environment:
       - MARIADB_RANDOM_ROOT_PASSWORD=1
-      - MYSQL_DATABASE_FILE=/run/secrets/db_name
-      - MYSQL_USER_FILE=/run/secrets/db_user
-      - MYSQL_PASSWORD=/run/secrets/db_user_pw
-    
-    secrets:
-      - db_name
-      - db_user
-      - db_user_pw
-    
+      - MYSQL_DATABASE=dev-test
+      - MYSQL_USER=devuser
+      - MYSQL_PASSWORD="9878943bfbdndmfgb67345340mndf(*^&bhk56)"
+
     restart: unless-stopped
 
   phpmyadmin:
@@ -154,12 +143,8 @@ services:
     
     environment:
       - PMA_HOST=mariadb
-      - PMA_USER_FILE=/run/secrets/db_user
-      - PMA_PASSWORD_FILE=/run/secrets/db_user_pw
-    
-    secrets:
-      - db_user
-      - db_user_pw
+      - PMA_USER=devuser
+      - PMA_PASSWORD="9878943bfbdndmfgb67345340mndf(*^&bhk56)"
 
     restart: unless-stopped
 
@@ -184,20 +169,3 @@ services:
       - MAILDEV_SMTP_PORT=1025
     
     restart: unless-stopped
-
-secrets:
-  # create and/or modify these files in the secrets subdirectory
-  # to configure your environment.
-  db_user:
-    file: ./secrets/db-user.txt
-  db_user_pw:
-    file: ./secrets/db-user-pw.txt
-  db_name:
-    file: ./secrets/db_name.txt
-  domain:
-    file: ./secrets/domain-development.txt
-  admin_mail:
-    file: ./secrets/admin_email_development.txt
-  admin_pw:
-    file: ./secrets/admin_pw_development.txt
-  

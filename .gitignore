@@ -4,22 +4,10 @@ composer.phar
 # Commit your application's lock file https://getcomposer.org/doc/01-basic-usage.md#commit-your-composer-lock-file-to-version-control
 # You may choose to ignore a library lock file http://getcomposer.org/doc/02-libraries.md#lock-file
 # composer.lock
-config/config_dev.yml
-config/config_legacy_dev.yml
-config/config_legacy_prod.yml
-config/config_legacy_test.yml
-config/config_legacy.yml
-config/config_prod.yml
-config/config_test.yml
-config/config.yml
-config/doctrine.yml
-config/parameters.yml.dist
-config/routing_dev.yml
-config/routing.yml
-config/security_dev.yml
-config/security_prod.yml
-config/security_test.yml
-config/services.yml
-config/set_parameters.php
-config/addons/categories.yml
-config/api_platform/resources.yml
+html/
+modules/
+themes/
+override/
+config/
+tmp/
+
