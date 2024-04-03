@@ -72,7 +72,7 @@ services:
       # PS_HANDLE_DYNAMIC_DOMAIN is set = 1
       - PS_DOMAIN_FILE=/run/secrets/domain
       # Automatically update the domain in the database
-      - PS_HANDLE_DYNAMIC_DOMAIN=1
+      - PS_HANDLE_DYNAMIC_DOMAIN=1 # default: 0
 
       # Localisation
       #- PS_LANGUAGE=en
@@ -85,7 +85,7 @@ services:
 
       # If SSL is used, then you will need to configure it on your host
       # or your proxy (e.g. nginxproxymanager) if applicable.
-      - PS_ENABLE_SSL= # default: 0
+      - PS_ENABLE_SSL= 1 # default: 0
 
       # Only really useful if you are just spinning up am empty default install
       # To use existing credentials in an uploaded DB, then manually adjust
@@ -101,9 +101,9 @@ services:
       - E_SMTP_SERVER=0
 
     secrets:
+      - db_name
       - db_user
       - db_user_pw
-      - db_name
       - domain
       - admin_mail
       - admin_pw
@@ -117,19 +117,22 @@ services:
     networks:
       prestashop:
     
-    volumes:
-      #- ./db:/var/lib/mysql
+    #volumes:
+      #- ./db:/var/lib/mariadb
 
       # Any SQL file in here will be used to populate the database on creation
-      - ./database-import:/docker-entrypoint-initdb.d
+      #- ./database-import:/docker-entrypoint-initdb.d
 
     environment:
-      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_pw
+      - MARIADB_RANDOM_ROOT_PASSWORD=1
       - MYSQL_DATABASE_FILE=/run/secrets/db_name
+      - MYSQL_USER_FILE=/run/secrets/db_user
+      - MYSQL_PASSWORD=/run/secrets/db_user_pw
     
     secrets:
-      - db_root_pw
       - db_name
+      - db_user
+      - db_user_pw
     
     restart: unless-stopped
 
@@ -185,8 +188,6 @@ services:
 secrets:
   # create and/or modify these files in the secrets subdirectory
   # to configure your environment.
-  db_root_pw:
-    file: ./secrets/db-root-pw.txt
   db_user:
     file: ./secrets/db-user.txt
   db_user_pw:
