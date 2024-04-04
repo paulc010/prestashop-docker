@@ -2,34 +2,27 @@ networks:
   prestashop:
     driver: bridge
 
-services:
-  
+services:  
   ps-dev:
-  
     image: prestashop/prestashop:8.1.4-8.1
-  
     networks:
       prestashop:
-  
     ports:
       # If you are not using a proxy, then you may want to just
       # run a single instance on port 80 rather than running
       # multiple stores on different ports. Adjust accordingly.
       - 1230:80
-  
     links:
       - mariadb:mariadb
-  
     depends_on:
-      - mariadb
-  
+      mariadb:
+        condition: service_healthy
     volumes:
       # These can be adjusted to suit various situations
       # By default there is local filesystem persistence
       # only for the main configuration directory to allow
       # changes to be made to provide authentication when
       # an existing store DB is imported.
-
       #- ./html:/var/www/html
       #- ./modules:/var/www/html/modules
       #- ./themes:/var/www/html/themes
@@ -37,135 +30,124 @@ services:
       # Required to match authentication with an existing store DB
       # parameters.php will need to be edited to match the source store.
       - ./config:/var/www/html/app/config
-
       # The following is used to provide customisation
       - ./init-scripts:/tmp/init-scripts
-      - ./tmp:/tmp
+      #- ./tmp:/tmp
     environment:
       # Enable prestashop debug mode via environment variable
       # Note that since PrestaShop docker using a custom defines
       # file, the environment is the only way to toggle this mode.
       #- PS_DEV_MODE=0
-      
       # Only ever used for PrestaShop infrastructure
       #- PS_HOST_MODE=0
-      
       # Should you want to create a demo store
       #- PS_DEMO_MODE=0
 
       # The following are mandatory.
+
+      # Currently PrestaShop docker images don't support secrets
       - DB_SERVER=mariadb
-      - DB_USER=devuser
-      - DB_PASSWD="9878943bfbdndmfgb67345340mndf(*^&bhk56)"
+      # If you supply a database import, then match with source
       - DB_NAME=dev-test
+      - DB_USER=devuser
+      - DB_PASSWD=password
+      - DB_PORT=3306
 
       # The following three parameters control automatic installation
       - PS_INSTALL_AUTO=1 # default : 0
-      
-      #- PS_ERASE_DB=0
-      # If you enable PS_INSTALL_DB then it will likely fail
+      #- PS_ERASE_DB=0 # default: 0
       # Better to create the database in the mariadb services section,
-      # if required
+      # if this is required. It actually means "Create Database".
       #- PS_INSTALL_DB=0 # default : 0
 
       # Set the domain for the local copy. The database will be updated
       # and there is no need to manually change the configuration even
       # when uploading a database from another store, providing
       # PS_HANDLE_DYNAMIC_DOMAIN is set = 1
-      - PS_DOMAIN=localhost
+      - PS_DOMAIN=dev.pcampbell.me.uk
       # Automatically update the domain in the database
       - PS_HANDLE_DYNAMIC_DOMAIN=1 # default: 0
-
       # Localisation
       #- PS_LANGUAGE=en
       #- PS_COUNTRY=gb
       #- PS_ALL_LANGUAGES=0
-      
       # These prevent the need to manually rename each time the container is spun up
       - PS_FOLDER_ADMIN=admin-dev
       - PS_FOLDER_INSTALL=install-dev
-
       # If SSL is used, then you will need to configure it on your host
       # or your proxy (e.g. nginxproxymanager) if applicable.
-      - PS_ENABLE_SSL= 1 # default: 0
-
+      - PS_ENABLE_SSL= 0 # default: 0
       # Only really useful if you are just spinning up am empty default install
       # To use existing credentials in an uploaded DB, then manually adjust
       # app/config/parameters.php. This is mapped by default to the config
       # subdirectory below the directory containing this YAML file.
       #- ADMIN_MAIL=
       #- ADMIN_PASSWD=
-
       # Point all PHP errors to the syslog (see init-scripts)
       - E_DEVELOPMENT=1
-
       # Configure the store to use maildev for email testing (see init-scripts)
       - E_SMTP_SERVER=0
-    
     restart: unless-stopped
 
   mariadb:
-    
     image: mariadb
-    
     networks:
       prestashop:
-    
+    ports:
+      - 3306
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
     #volumes:
       #- ./db:/var/lib/mariadb
-
       # Any SQL file in here will be used to populate the database on creation
       #- ./database-import:/docker-entrypoint-initdb.d
-
     environment:
-      - MARIADB_RANDOM_ROOT_PASSWORD=1
+      - MARIADB_RANDOM_ROOT_PASSWORD=1 # We shouldn't need this anyway
+      - MYSQL_ROOT_HOST=% # See: https://github.com/docker-library/mysql/issues/241
+    # ideally these should be passed as secrets
+    # If you supply a database import, then match with source
       - MYSQL_DATABASE=dev-test
       - MYSQL_USER=devuser
-      - MYSQL_PASSWORD="9878943bfbdndmfgb67345340mndf(*^&bhk56)"
-
+      - MYSQL_PASSWORD=password
     restart: unless-stopped
 
   phpmyadmin:
-    
-    image: phpmyadmin/phpmyadmin
-    
+    image: phpmyadmin/phpmyadmin    
     networks:
       prestashop:
-    
     links:
       - mariadb:mariadb
-    
     ports:
       - 1231:80
-    
     depends_on:
-      - mariadb
-    
+      mariadb:
+        condition: service_healthy
     environment:
       - PMA_HOST=mariadb
+    # ideally these should be passed as secrets
+    # If you supply a database import, then match with source
       - PMA_USER=devuser
-      - PMA_PASSWORD="9878943bfbdndmfgb67345340mndf(*^&bhk56)"
-
+      - PMA_PASSWORD=password
     restart: unless-stopped
 
   maildev:
-    
     image: maildev/maildev
-    
     networks:
       prestashop:
-    
     ports:
       - 1232:1080
-    
     logging:
       driver: "json-file"
       options:
         max-size: "1m"
-    
     environment:
       - TZ=${TZ:-'Europe/London'}
       - MAILDEV_WEB_PORT=1080
       - MAILDEV_SMTP_PORT=1025
-    
     restart: unless-stopped
+
