@@ -23,13 +23,13 @@ services:
       # only for the main configuration directory to allow
       # changes to be made to provide authentication when
       # an existing store DB is imported.
-      #- ./html:/var/www/html
+      - ./html:/var/www/html
       #- ./modules:/var/www/html/modules
       #- ./themes:/var/www/html/themes
       #- ./override:/var/www/html/override
       # Required to match authentication with an existing store DB
       # parameters.php will need to be edited to match the source store.
-      - ./config:/var/www/html/app/config
+      #- ./config:/var/www/html/app/config
       # The following is used to provide customisation
       - ./init-scripts:/tmp/init-scripts
       #- ./tmp:/tmp
@@ -64,7 +64,8 @@ services:
       # and there is no need to manually change the configuration even
       # when uploading a database from another store, providing
       # PS_HANDLE_DYNAMIC_DOMAIN is set = 1
-      - PS_DOMAIN=dev.pcampbell.me.uk
+      - PS_DOMAIN=localhost
+      - PS_CANONICAL_REDIRECT=0 # Added to handle infinite redirects when using a proxy
       # Automatically update the domain in the database
       - PS_HANDLE_DYNAMIC_DOMAIN=1 # default: 0
       # Localisation
@@ -76,7 +77,7 @@ services:
       - PS_FOLDER_INSTALL=install-dev
       # If SSL is used, then you will need to configure it on your host
       # or your proxy (e.g. nginxproxymanager) if applicable.
-      - PS_ENABLE_SSL= 0 # default: 0
+      - PS_ENABLE_SSL= 1 # default: 0
       # Only really useful if you are just spinning up am empty default install
       # To use existing credentials in an uploaded DB, then manually adjust
       # app/config/parameters.php. This is mapped by default to the config
@@ -86,7 +87,7 @@ services:
       # Point all PHP errors to the syslog (see init-scripts)
       - E_DEVELOPMENT=1
       # Configure the store to use maildev for email testing (see init-scripts)
-      - E_SMTP_SERVER=0
+      - E_SMTP_SERVER=1
     restart: unless-stopped
 
   mariadb:
