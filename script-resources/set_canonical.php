@@ -31,9 +31,20 @@ require_once '/var/www/html/config/config.inc.php';
 if (!defined('_PS_VERSION_'))
 	exit;
 
-// Configure shop to use maildev
-Configuration::updateValue('PS_MAIL_SMTP_ENCRYPTION','off');
-Configuration::updateValue('PS_MAIL_SMTP_PORT','1025');
-Configuration::updateValue('PS_MAIL_SERVER', 'maildev');
+if (!$argv) {
+    return false;
+}
+
+if (!$options=getopt('', ["redirect:"])) {
+    error_log('set_canonical.php : --redirect <val> option is required.');
+    die();
+}
+
+if (isset($options['redirect'])) {
+    // Set canonical redirect
+    error_log('Setting PS_CANONICAL_REDIRECT to: '. $options['redirect']);
+    Configuration::updateValue('PS_CANONICAL_REDIRECT',$options['redirect']);
+}
+
 
 die();

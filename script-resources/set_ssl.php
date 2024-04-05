@@ -31,8 +31,20 @@ require_once '/var/www/html/config/config.inc.php';
 if (!defined('_PS_VERSION_'))
 	exit;
 
-// Configure shop to use maildev
-if (isset($_ENV["PS_CANONICAL_REDIRECT"]))
-    Configuration::updateValue('PS_CANONICAL_REDIRECT',$_ENV["PS_CANONICAL_REDIRECT"]);
+if (!$argv) {
+    return false;
+}
+
+if (!$options=getopt('', ["ssl:", "everywhere:"])) {
+    error_log('set_canonical.php : --ssl <val> and --everywhere <val> options are required.');
+    die();
+}
+
+if (isset($options['ssl']) && isset($options['everywhere'])) {
+    // Set ssl options
+    Configuration::updateValue('PS_SSL_ENABLED',$options['ssl']);
+    Configuration::updateValue('PS_SSL_ENABLED_EVERYWHERE',$options['everywhere']);
+}
+
 
 die();
